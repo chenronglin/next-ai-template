@@ -9,10 +9,25 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { signInSchema } from "@/features/auth/schema";
+import { createSignInSchema } from "@/features/auth/schema";
+import { localizeHref, type Locale } from "@/i18n/config";
+import type { Dictionary } from "@/i18n/types";
 import { authClient } from "@/lib/auth-client";
 
-export function SignInForm() {
+type SignInFormProps = {
+  locale: Locale;
+  messages: Dictionary["auth"]["signIn"]["form"];
+  validationMessages: Pick<
+    Dictionary["auth"]["validation"],
+    "invalidEmail" | "passwordMin"
+  >;
+};
+
+export function SignInForm({
+  locale,
+  messages,
+  validationMessages,
+}: SignInFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [rememberMe, setRememberMe] = useState(true);
@@ -20,14 +35,14 @@ export function SignInForm() {
 
   function handleSubmit(formData: FormData) {
     // 表单提交是明确交互，不需要 effect；先本地 Zod 校验，再调用 Better Auth。
-    const parsed = signInSchema.safeParse({
+    const parsed = createSignInSchema(validationMessages).safeParse({
       email: formData.get("email"),
       password: formData.get("password"),
       rememberMe,
     });
 
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "登录信息不完整");
+      toast.error(parsed.error.issues[0]?.message ?? messages.incomplete);
       return;
     }
 
@@ -39,12 +54,12 @@ export function SignInForm() {
       });
 
       if (result.error) {
-        toast.error(result.error.message ?? "登录失败");
+        toast.error(result.error.message ?? messages.failure);
         return;
       }
 
-      toast.success("登录成功");
-      router.push(searchParams.get("callbackUrl") ?? "/dashboard");
+      toast.success(messages.success);
+      router.push(getSafeCallbackUrl(searchParams.get("callbackUrl"), locale));
       router.refresh();
     });
   }
@@ -52,11 +67,11 @@ export function SignInForm() {
   return (
     <form action={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="email">邮箱</Label>
+        <Label htmlFor="email">{messages.email}</Label>
         <Input id="email" name="email" type="email" autoComplete="email" required />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="password">密码</Label>
+        <Label htmlFor="password">{messages.password}</Label>
         <Input
           id="password"
           name="password"
@@ -71,24 +86,36 @@ export function SignInForm() {
             checked={rememberMe}
             onCheckedChange={(checked) => setRememberMe(checked === true)}
           />
-          <span>记住我</span>
+          <span>{messages.rememberMe}</span>
         </label>
-        <Link href="/forgot-password" className="text-primary hover:underline">
-          忘记密码
+        <Link
+          href={localizeHref("/forgot-password", locale)}
+          className="text-primary hover:underline"
+        >
+          {messages.forgotPassword}
         </Link>
       </div>
       <Button type="submit" className="w-full" disabled={isPending}>
-        {isPending ? "登录中" : "登录"}
+        {isPending ? messages.submitting : messages.submit}
       </Button>
       <div className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
-        OAuth 登录区域已预留，可按项目需要接入 GitHub 或 Google。
+        {messages.oauthPlaceholder}
       </div>
       <p className="text-center text-sm text-muted-foreground">
-        还没有账户？{" "}
-        <Link href="/sign-up" className="text-primary hover:underline">
-          注册
+        {messages.noAccount}{" "}
+        <Link href={localizeHref("/sign-up", locale)} className="text-primary hover:underline">
+          {messages.signUp}
         </Link>
       </p>
     </form>
   );
+}
+
+function getSafeCallbackUrl(callbackUrl: string | null, locale: Locale) {
+  if (!callbackUrl || !callbackUrl.startsWith("/") || callbackUrl.startsWith("//")) {
+    return localizeHref("/dashboard", locale);
+  }
+
+  // callbackUrl 来自 URL 查询参数，只允许站内路径，避免登录后跳到外部地址。
+  return localizeHref(callbackUrl, locale);
 }

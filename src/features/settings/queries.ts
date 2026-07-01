@@ -3,6 +3,7 @@ import "server-only";
 import { cache } from "react";
 
 import type { userPreference } from "@/generated/prisma/client";
+import { defaultLocale } from "@/i18n/config";
 import { db } from "@/lib/db";
 import { aiModelValues } from "@/lib/constants";
 
@@ -14,7 +15,7 @@ export type PreferenceView = Pick<
 const defaultPreference: PreferenceView = {
   theme: "system",
   defaultModel: aiModelValues[0],
-  language: "zh-CN",
+  language: defaultLocale,
   notifications: true,
 };
 

@@ -3,10 +3,12 @@
 import { revalidatePath } from "next/cache";
 
 import {
-  noteCreateSchema,
-  noteDeleteSchema,
-  noteUpdateSchema,
+  createNoteCreateSchema,
+  createNoteDeleteSchema,
+  createNoteUpdateSchema,
 } from "@/features/notes/schema";
+import { getLocaleFromFormData, localizeHref } from "@/i18n/config";
+import { getDictionary } from "@/i18n/dictionaries";
 import { db } from "@/lib/db";
 import { actionFailure, actionSuccess, type ActionResult } from "@/server/action-result";
 import { requireUser } from "@/server/require-user";
@@ -15,14 +17,21 @@ export async function createNoteAction(
   _previousState: ActionResult,
   formData: FormData,
 ): Promise<ActionResult> {
-  const session = await requireUser();
-  const parsed = noteCreateSchema.safeParse({
+  const locale = getLocaleFromFormData(formData);
+  const [dictionary, session] = await Promise.all([
+    getDictionary(locale),
+    requireUser(locale),
+  ]);
+  const parsed = createNoteCreateSchema(dictionary.notes.validation).safeParse({
     title: formData.get("title"),
     content: formData.get("content"),
   });
 
   if (!parsed.success) {
-    return actionFailure("创建 Note 失败", parsed.error.flatten().fieldErrors);
+    return actionFailure(
+      dictionary.notes.actions.createFailure,
+      parsed.error.flatten().fieldErrors,
+    );
   }
 
   await db.note.create({
@@ -33,24 +42,31 @@ export async function createNoteAction(
     },
   });
 
-  revalidatePath("/examples/notes");
-  revalidatePath("/dashboard");
-  return actionSuccess("Note 已创建");
+  revalidatePath(localizeHref("/examples/notes", locale));
+  revalidatePath(localizeHref("/dashboard", locale));
+  return actionSuccess(dictionary.notes.actions.createSuccess);
 }
 
 export async function updateNoteAction(
   _previousState: ActionResult,
   formData: FormData,
 ): Promise<ActionResult> {
-  const session = await requireUser();
-  const parsed = noteUpdateSchema.safeParse({
+  const locale = getLocaleFromFormData(formData);
+  const [dictionary, session] = await Promise.all([
+    getDictionary(locale),
+    requireUser(locale),
+  ]);
+  const parsed = createNoteUpdateSchema(dictionary.notes.validation).safeParse({
     id: formData.get("id"),
     title: formData.get("title"),
     content: formData.get("content"),
   });
 
   if (!parsed.success) {
-    return actionFailure("更新 Note 失败", parsed.error.flatten().fieldErrors);
+    return actionFailure(
+      dictionary.notes.actions.updateFailure,
+      parsed.error.flatten().fieldErrors,
+    );
   }
 
   const result = await db.note.updateMany({
@@ -65,25 +81,32 @@ export async function updateNoteAction(
   });
 
   if (result.count === 0) {
-    return actionFailure("没有找到可更新的 Note");
+    return actionFailure(dictionary.notes.actions.updateMissing);
   }
 
-  revalidatePath("/examples/notes");
-  revalidatePath("/dashboard");
-  return actionSuccess("Note 已更新");
+  revalidatePath(localizeHref("/examples/notes", locale));
+  revalidatePath(localizeHref("/dashboard", locale));
+  return actionSuccess(dictionary.notes.actions.updateSuccess);
 }
 
 export async function deleteNoteAction(
   _previousState: ActionResult,
   formData: FormData,
 ): Promise<ActionResult> {
-  const session = await requireUser();
-  const parsed = noteDeleteSchema.safeParse({
+  const locale = getLocaleFromFormData(formData);
+  const [dictionary, session] = await Promise.all([
+    getDictionary(locale),
+    requireUser(locale),
+  ]);
+  const parsed = createNoteDeleteSchema(dictionary.notes.validation).safeParse({
     id: formData.get("id"),
   });
 
   if (!parsed.success) {
-    return actionFailure("删除 Note 失败", parsed.error.flatten().fieldErrors);
+    return actionFailure(
+      dictionary.notes.actions.deleteFailure,
+      parsed.error.flatten().fieldErrors,
+    );
   }
 
   const result = await db.note.deleteMany({
@@ -94,10 +117,10 @@ export async function deleteNoteAction(
   });
 
   if (result.count === 0) {
-    return actionFailure("没有找到可删除的 Note");
+    return actionFailure(dictionary.notes.actions.deleteMissing);
   }
 
-  revalidatePath("/examples/notes");
-  revalidatePath("/dashboard");
-  return actionSuccess("Note 已删除");
+  revalidatePath(localizeHref("/examples/notes", locale));
+  revalidatePath(localizeHref("/dashboard", locale));
+  return actionSuccess(dictionary.notes.actions.deleteSuccess);
 }

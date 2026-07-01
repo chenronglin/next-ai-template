@@ -2,7 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 
-import { updateProfileSchema } from "@/features/profile/schema";
+import { createUpdateProfileSchema } from "@/features/profile/schema";
+import { getLocaleFromFormData, localizeHref } from "@/i18n/config";
+import { getDictionary } from "@/i18n/dictionaries";
 import { db } from "@/lib/db";
 import { actionFailure, actionSuccess, type ActionResult } from "@/server/action-result";
 import { requireUser } from "@/server/require-user";
@@ -11,14 +13,21 @@ export async function updateProfileAction(
   _previousState: ActionResult,
   formData: FormData,
 ): Promise<ActionResult> {
-  const session = await requireUser();
-  const parsed = updateProfileSchema.safeParse({
+  const locale = getLocaleFromFormData(formData);
+  const [dictionary, session] = await Promise.all([
+    getDictionary(locale),
+    requireUser(locale),
+  ]);
+  const parsed = createUpdateProfileSchema(dictionary.profile.validation).safeParse({
     name: formData.get("name"),
     image: formData.get("image"),
   });
 
   if (!parsed.success) {
-    return actionFailure("个人资料更新失败", parsed.error.flatten().fieldErrors);
+    return actionFailure(
+      dictionary.profile.actions.failure,
+      parsed.error.flatten().fieldErrors,
+    );
   }
 
   await db.user.update({
@@ -29,7 +38,7 @@ export async function updateProfileAction(
     },
   });
 
-  revalidatePath("/me");
-  revalidatePath("/dashboard");
-  return actionSuccess("个人资料已更新");
+  revalidatePath(localizeHref("/me", locale));
+  revalidatePath(localizeHref("/dashboard", locale));
+  return actionSuccess(dictionary.profile.actions.success);
 }

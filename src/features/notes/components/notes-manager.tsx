@@ -28,6 +28,8 @@ import {
   deleteNoteAction,
   updateNoteAction,
 } from "@/features/notes/actions";
+import { localizeHref, type Locale } from "@/i18n/config";
+import type { Dictionary } from "@/i18n/types";
 import { formatDateTime } from "@/lib/format";
 import type { ActionResult } from "@/server/action-result";
 
@@ -39,9 +41,11 @@ const initialState: ActionResult = {
 type NotesManagerProps = {
   notes: note[];
   query: string;
+  locale: Locale;
+  messages: Dictionary["notes"];
 };
 
-export function NotesManager({ notes, query }: NotesManagerProps) {
+export function NotesManager({ notes, query, locale, messages }: NotesManagerProps) {
   const [editingNote, setEditingNote] = useState<note | null>(null);
   const [createState, createAction, isCreating] = useActionState(
     createNoteAction,
@@ -59,24 +63,37 @@ export function NotesManager({ notes, query }: NotesManagerProps) {
   return (
     <div className="grid gap-6">
       <div className="grid gap-4 rounded-lg border bg-background p-4">
-        <form className="flex flex-col gap-3 sm:flex-row" action="/examples/notes">
+        <form
+          className="flex flex-col gap-3 sm:flex-row"
+          action={localizeHref("/examples/notes", locale)}
+        >
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-            <Input name="q" defaultValue={query} placeholder="搜索标题或内容" className="pl-8" />
+            <Input
+              name="q"
+              defaultValue={query}
+              placeholder={messages.searchPlaceholder}
+              className="pl-8"
+            />
           </div>
           <Button type="submit" variant="outline">
-            搜索
+            {messages.searchSubmit}
           </Button>
         </form>
 
         <form action={createAction} className="grid gap-3">
+          <input type="hidden" name="locale" value={locale} />
           <div className="grid gap-2">
-            <Label htmlFor="title">标题</Label>
-            <Input id="title" name="title" placeholder="例如：第一个业务模块" />
+            <Label htmlFor="title">{messages.create.titleLabel}</Label>
+            <Input id="title" name="title" placeholder={messages.create.titlePlaceholder} />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="content">内容</Label>
-            <Textarea id="content" name="content" placeholder="写下这个 Note 的内容" />
+            <Label htmlFor="content">{messages.create.contentLabel}</Label>
+            <Textarea
+              id="content"
+              name="content"
+              placeholder={messages.create.contentPlaceholder}
+            />
           </div>
           {createState.message ? (
             <p className={createState.ok ? "text-sm text-primary" : "text-sm text-destructive"}>
@@ -85,7 +102,7 @@ export function NotesManager({ notes, query }: NotesManagerProps) {
           ) : null}
           <Button type="submit" className="w-fit" disabled={isCreating}>
             <Plus data-icon="inline-start" />
-            {isCreating ? "创建中" : "新建 Note"}
+            {isCreating ? messages.create.submitting : messages.create.submit}
           </Button>
         </form>
       </div>
@@ -94,9 +111,9 @@ export function NotesManager({ notes, query }: NotesManagerProps) {
         {notes.length === 0 ? (
           <div className="grid min-h-52 place-items-center p-6 text-center">
             <div>
-              <p className="font-medium">暂无 Note</p>
+              <p className="font-medium">{messages.empty.title}</p>
               <p className="mt-2 text-sm text-muted-foreground">
-                创建第一个 Note 后，Codex 可以沿用这个模块继续扩展业务功能。
+                {messages.empty.description}
               </p>
             </div>
           </div>
@@ -104,10 +121,10 @@ export function NotesManager({ notes, query }: NotesManagerProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>标题</TableHead>
-                <TableHead className="hidden md:table-cell">内容</TableHead>
-                <TableHead className="hidden sm:table-cell">更新时间</TableHead>
-                <TableHead className="w-28 text-right">操作</TableHead>
+                <TableHead>{messages.table.title}</TableHead>
+                <TableHead className="hidden md:table-cell">{messages.table.content}</TableHead>
+                <TableHead className="hidden sm:table-cell">{messages.table.updatedAt}</TableHead>
+                <TableHead className="w-28 text-right">{messages.table.actions}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -118,7 +135,7 @@ export function NotesManager({ notes, query }: NotesManagerProps) {
                     {item.content}
                   </TableCell>
                   <TableCell className="hidden text-muted-foreground sm:table-cell">
-                    {formatDateTime(item.updatedAt)}
+                    {formatDateTime(item.updatedAt, locale)}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
@@ -127,18 +144,26 @@ export function NotesManager({ notes, query }: NotesManagerProps) {
                         onOpenChange={(open) => setEditingNote(open ? item : null)}
                       >
                         <DialogTrigger asChild>
-                          <Button type="button" variant="ghost" size="icon-sm" aria-label="编辑 Note">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={messages.table.editAria}
+                          >
                             <Pencil />
                           </Button>
                         </DialogTrigger>
                         <DialogContent>
                           <DialogHeader>
-                            <DialogTitle>编辑 Note</DialogTitle>
+                            <DialogTitle>{messages.edit.title}</DialogTitle>
                           </DialogHeader>
                           <form action={updateAction} className="grid gap-3">
+                            <input type="hidden" name="locale" value={locale} />
                             <input type="hidden" name="id" value={item.id} />
                             <div className="grid gap-2">
-                              <Label htmlFor={`edit-title-${item.id}`}>标题</Label>
+                              <Label htmlFor={`edit-title-${item.id}`}>
+                                {messages.create.titleLabel}
+                              </Label>
                               <Input
                                 id={`edit-title-${item.id}`}
                                 name="title"
@@ -146,7 +171,9 @@ export function NotesManager({ notes, query }: NotesManagerProps) {
                               />
                             </div>
                             <div className="grid gap-2">
-                              <Label htmlFor={`edit-content-${item.id}`}>内容</Label>
+                              <Label htmlFor={`edit-content-${item.id}`}>
+                                {messages.create.contentLabel}
+                              </Label>
                               <Textarea
                                 id={`edit-content-${item.id}`}
                                 name="content"
@@ -165,18 +192,19 @@ export function NotesManager({ notes, query }: NotesManagerProps) {
                               </p>
                             ) : null}
                             <Button type="submit" disabled={isUpdating}>
-                              {isUpdating ? "保存中" : "保存"}
+                              {isUpdating ? messages.edit.submitting : messages.edit.submit}
                             </Button>
                           </form>
                         </DialogContent>
                       </Dialog>
                       <form action={deleteAction}>
+                        <input type="hidden" name="locale" value={locale} />
                         <input type="hidden" name="id" value={item.id} />
                         <Button
                           type="submit"
                           variant="ghost"
                           size="icon-sm"
-                          aria-label="删除 Note"
+                          aria-label={messages.table.deleteAria}
                           disabled={isDeleting}
                         >
                           <Trash2 />

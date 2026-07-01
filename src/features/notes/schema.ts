@@ -1,17 +1,59 @@
 import { z } from "zod";
 
-// Notes CRUD 的输入规则集中在这里，Server Action 不接受未经过 schema 的表单值。
-export const noteCreateSchema = z.object({
-  title: z.string().trim().min(1, "标题不能为空").max(80, "标题最多 80 个字符"),
-  content: z.string().trim().min(1, "内容不能为空").max(2000, "内容最多 2000 个字符"),
+type NoteValidationMessages = {
+  titleRequired: string;
+  titleMax: string;
+  contentRequired: string;
+  contentMax: string;
+  missingId: string;
+};
+
+export function createNoteCreateSchema(messages: NoteValidationMessages) {
+  // Notes CRUD 的输入规则集中在这里，Server Action 不接受未经过 schema 的表单值。
+  return z.object({
+    title: z.string().trim().min(1, messages.titleRequired).max(80, messages.titleMax),
+    content: z
+      .string()
+      .trim()
+      .min(1, messages.contentRequired)
+      .max(2000, messages.contentMax),
+  });
+}
+
+export function createNoteUpdateSchema(messages: NoteValidationMessages) {
+  return createNoteCreateSchema(messages).extend({
+    id: z.string().min(1, messages.missingId),
+  });
+}
+
+export function createNoteDeleteSchema(messages: NoteValidationMessages) {
+  return z.object({
+    id: z.string().min(1, messages.missingId),
+  });
+}
+
+export const noteCreateSchema = createNoteCreateSchema({
+  titleRequired: "标题不能为空",
+  titleMax: "标题最多 80 个字符",
+  contentRequired: "内容不能为空",
+  contentMax: "内容最多 2000 个字符",
+  missingId: "缺少 Note ID",
 });
 
-export const noteUpdateSchema = noteCreateSchema.extend({
-  id: z.string().min(1, "缺少 Note ID"),
+export const noteUpdateSchema = createNoteUpdateSchema({
+  titleRequired: "标题不能为空",
+  titleMax: "标题最多 80 个字符",
+  contentRequired: "内容不能为空",
+  contentMax: "内容最多 2000 个字符",
+  missingId: "缺少 Note ID",
 });
 
-export const noteDeleteSchema = z.object({
-  id: z.string().min(1, "缺少 Note ID"),
+export const noteDeleteSchema = createNoteDeleteSchema({
+  titleRequired: "标题不能为空",
+  titleMax: "标题最多 80 个字符",
+  contentRequired: "内容不能为空",
+  contentMax: "内容最多 2000 个字符",
+  missingId: "缺少 Note ID",
 });
 
 export const noteSearchSchema = z.object({

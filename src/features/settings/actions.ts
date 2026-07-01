@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 
 import { settingsSchema } from "@/features/settings/schema";
+import { getLocaleFromFormData, localizeHref } from "@/i18n/config";
+import { getDictionary } from "@/i18n/dictionaries";
 import { db } from "@/lib/db";
 import { actionFailure, actionSuccess, type ActionResult } from "@/server/action-result";
 import { requireUser } from "@/server/require-user";
@@ -11,7 +13,11 @@ export async function updateSettingsAction(
   _previousState: ActionResult,
   formData: FormData,
 ): Promise<ActionResult> {
-  const session = await requireUser();
+  const locale = getLocaleFromFormData(formData);
+  const [dictionary, session] = await Promise.all([
+    getDictionary(locale),
+    requireUser(locale),
+  ]);
   const parsed = settingsSchema.safeParse({
     theme: formData.get("theme"),
     defaultModel: formData.get("defaultModel"),
@@ -20,7 +26,10 @@ export async function updateSettingsAction(
   });
 
   if (!parsed.success) {
-    return actionFailure("设置保存失败", parsed.error.flatten().fieldErrors);
+    return actionFailure(
+      dictionary.settings.actions.failure,
+      parsed.error.flatten().fieldErrors,
+    );
   }
 
   await db.userPreference.upsert({
@@ -32,7 +41,7 @@ export async function updateSettingsAction(
     update: parsed.data,
   });
 
-  revalidatePath("/settings");
-  revalidatePath("/dashboard");
-  return actionSuccess("设置已保存");
+  revalidatePath(localizeHref("/settings", locale));
+  revalidatePath(localizeHref("/dashboard", locale));
+  return actionSuccess(dictionary.settings.actions.success);
 }

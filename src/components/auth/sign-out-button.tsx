@@ -6,9 +6,16 @@ import { useTransition } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { localizeHref, type Locale } from "@/i18n/config";
+import type { Dictionary } from "@/i18n/types";
 import { authClient } from "@/lib/auth-client";
 
-export function SignOutButton() {
+type SignOutButtonProps = {
+  locale: Locale;
+  messages: Dictionary["appShell"]["signOut"];
+};
+
+export function SignOutButton({ locale, messages }: SignOutButtonProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -18,12 +25,12 @@ export function SignOutButton() {
       const result = await authClient.signOut();
 
       if (result.error) {
-        toast.error(result.error.message ?? "退出登录失败");
+        toast.error(result.error.message ?? messages.failure);
         return;
       }
 
-      toast.success("已退出登录");
-      router.push("/");
+      toast.success(messages.success);
+      router.push(localizeHref("/", locale));
       router.refresh();
     });
   }
@@ -37,7 +44,7 @@ export function SignOutButton() {
       disabled={isPending}
     >
       <LogOut data-icon="inline-start" />
-      {isPending ? "退出中" : "退出"}
+      {isPending ? messages.pending : messages.button}
     </Button>
   );
 }

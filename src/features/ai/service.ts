@@ -3,6 +3,7 @@ import "server-only";
 import { generateText, gateway, streamText, type LanguageModelUsage } from "ai";
 
 import type { AiPromptInput } from "@/features/ai/schema";
+import type { Dictionary } from "@/i18n/types";
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import { aiModelLabels, aiModelValues } from "@/lib/constants";
@@ -53,14 +54,18 @@ export function createAiTextStream(input: AiPromptInput, userId: string) {
   });
 }
 
-export function createMockStreamResponse(input: AiPromptInput, userId: string) {
+export function createMockStreamResponse(
+  input: AiPromptInput,
+  userId: string,
+  messages: Dictionary["ai"]["mockStream"],
+) {
   const chunks = [
-    "本地演示流：",
-    "当前未配置 AI_GATEWAY_API_KEY，",
-    "所以这里返回可流式读取的模拟响应。\n\n",
-    "你的 Prompt 是：",
+    messages.prefix,
+    messages.missingKey,
+    messages.fallback,
+    messages.promptLabel,
     input.prompt,
-    "\n\n配置 Vercel AI Gateway 后，此路由会自动切换为真实模型输出。",
+    messages.enableGateway,
   ];
 
   const stream = new ReadableStream<Uint8Array>({

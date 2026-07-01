@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { aiPromptSchema } from "@/features/ai/schema";
+import { createAiPromptSchema } from "@/features/ai/schema";
 import { createAiTextStream, createMockStreamResponse } from "@/features/ai/service";
+import { resolveLocale } from "@/i18n/config";
+import { getDictionary } from "@/i18n/dictionaries";
 import { env } from "@/lib/env";
 import { getCurrentSession } from "@/server/require-user";
 
@@ -10,22 +12,29 @@ export async function POST(request: NextRequest) {
   const sessionPromise = getCurrentSession();
   const bodyPromise = request.json();
   const [session, body] = await Promise.all([sessionPromise, bodyPromise]);
+  const locale = resolveLocale(
+    typeof body?.locale === "string" ? body.locale : undefined,
+  );
+  const dictionary = await getDictionary(locale);
 
   if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { error: dictionary.ai.validation.unauthorized },
+      { status: 401 },
+    );
   }
 
-  const parsed = aiPromptSchema.safeParse(body);
+  const parsed = createAiPromptSchema(dictionary.ai.validation).safeParse(body);
 
   if (!parsed.success) {
     return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Invalid request" },
+      { error: parsed.error.issues[0]?.message ?? dictionary.ai.validation.invalidRequest },
       { status: 400 },
     );
   }
 
   if (!env.AI_GATEWAY_API_KEY) {
-    return createMockStreamResponse(parsed.data, session.user.id);
+    return createMockStreamResponse(parsed.data, session.user.id, dictionary.ai.mockStream);
   }
 
   const result = createAiTextStream(parsed.data, session.user.id);

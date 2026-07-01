@@ -6,35 +6,44 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { forgotPasswordSchema } from "@/features/auth/schema";
+import { createForgotPasswordSchema } from "@/features/auth/schema";
+import type { Dictionary } from "@/i18n/types";
 
-export function ForgotPasswordForm() {
+type ForgotPasswordFormProps = {
+  messages: Dictionary["auth"]["forgotPassword"]["form"];
+  validationMessages: Pick<Dictionary["auth"]["validation"], "invalidEmail">;
+};
+
+export function ForgotPasswordForm({
+  messages,
+  validationMessages,
+}: ForgotPasswordFormProps) {
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(formData: FormData) {
-    const parsed = forgotPasswordSchema.safeParse({
+    const parsed = createForgotPasswordSchema(validationMessages).safeParse({
       email: formData.get("email"),
     });
 
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "请输入邮箱");
+      toast.error(parsed.error.issues[0]?.message ?? messages.missingEmail);
       return;
     }
 
     // MVP 只保留入口和校验链路，后续接入邮件服务后在这里调用 Better Auth reset password。
     startTransition(() => {
-      toast.info("重置密码邮件功能已预留，请接入邮件服务后启用。");
+      toast.info(messages.reserved);
     });
   }
 
   return (
     <form action={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="email">邮箱</Label>
+        <Label htmlFor="email">{messages.email}</Label>
         <Input id="email" name="email" type="email" autoComplete="email" required />
       </div>
       <Button type="submit" className="w-full" disabled={isPending}>
-        {isPending ? "处理中" : "发送重置邮件"}
+        {isPending ? messages.submitting : messages.submit}
       </Button>
     </form>
   );

@@ -1,11 +1,26 @@
-// 日期格式化放在共享工具中，避免页面里重复创建 Intl.DateTimeFormat。
-const dateTimeFormatter = new Intl.DateTimeFormat("zh-CN", {
-  dateStyle: "medium",
-  timeStyle: "short",
-});
+import { defaultLocale, type Locale } from "@/i18n/config";
 
-export function formatDateTime(value: Date | string) {
-  return dateTimeFormatter.format(new Date(value));
+const dateTimeFormatters = new Map<Locale, Intl.DateTimeFormat>();
+
+function getDateTimeFormatter(locale: Locale) {
+  const cachedFormatter = dateTimeFormatters.get(locale);
+
+  if (cachedFormatter) {
+    return cachedFormatter;
+  }
+
+  // Intl.DateTimeFormat 创建成本不低，按 locale 缓存后可让列表、历史记录等重复格式化更稳定。
+  const formatter = new Intl.DateTimeFormat(locale, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+
+  dateTimeFormatters.set(locale, formatter);
+  return formatter;
+}
+
+export function formatDateTime(value: Date | string, locale: Locale = defaultLocale) {
+  return getDateTimeFormatter(locale).format(new Date(value));
 }
 
 export function getInitials(nameOrEmail: string) {

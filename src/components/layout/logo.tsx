@@ -1,15 +1,17 @@
 import Link from "next/link";
 
+import { localizeHref, type Locale } from "@/i18n/config";
 import { cn } from "@/lib/utils";
 
 type LogoProps = {
   className?: string;
+  locale: Locale;
 };
 
-export function Logo({ className }: LogoProps) {
+export function Logo({ className, locale }: LogoProps) {
   return (
     <Link
-      href="/"
+      href={localizeHref("/", locale)}
       className={cn("inline-flex items-center gap-2 font-semibold", className)}
     >
       {/* 使用简单几何标识承载模板品牌，避免引入额外图片资源和运行时依赖。 */}

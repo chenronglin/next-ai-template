@@ -1,7 +1,10 @@
+import { localeLabels, locales } from "@/i18n/config";
+
 // 这些常量同时供 Zod schema、表单选项和页面展示复用，避免同一组枚举在多处手写。
 export const themeValues = ["system", "light", "dark"] as const;
 
-export const languageValues = ["zh-CN", "en-US"] as const;
+// 语言枚举直接复用 i18n 配置，新增语种时只需要扩展 locale 配置和字典。
+export const languageValues = locales;
 
 export const aiModelValues = [
   "openai/gpt-4o-mini",
@@ -16,8 +19,7 @@ export const themeLabels: Record<(typeof themeValues)[number], string> = {
 };
 
 export const languageLabels: Record<(typeof languageValues)[number], string> = {
-  "zh-CN": "简体中文",
-  "en-US": "English",
+  ...localeLabels,
 };
 
 export const aiModelLabels: Record<(typeof aiModelValues)[number], string> = {
@@ -26,11 +28,11 @@ export const aiModelLabels: Record<(typeof aiModelValues)[number], string> = {
   "anthropic/claude-3-5-haiku": "Claude 3.5 Haiku",
 };
 
-// 后台导航集中声明，AppShell 与快速入口可以共享同一份路由事实源。
+// 后台导航集中声明，AppShell 与快速入口可以共享同一份路由事实源；展示文案由当前 locale 的字典提供。
 export const appNavigation = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/me", label: "我的" },
-  { href: "/settings", label: "设置" },
-  { href: "/examples/notes", label: "Notes" },
-  { href: "/ai", label: "AI" },
+  { href: "/dashboard", labelKey: "dashboard" },
+  { href: "/me", labelKey: "me" },
+  { href: "/settings", labelKey: "settings" },
+  { href: "/examples/notes", labelKey: "notes" },
+  { href: "/ai", labelKey: "ai" },
 ] as const;

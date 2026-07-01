@@ -2,8 +2,8 @@
 
 import { Save } from "lucide-react";
 import { useActionState, useState } from "react";
-import { useTheme } from "next-themes";
 
+import { useTheme } from "@/components/layout/theme-provider";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -16,14 +16,16 @@ import {
 } from "@/components/ui/select";
 import { updateSettingsAction } from "@/features/settings/actions";
 import type { PreferenceView } from "@/features/settings/queries";
+import type { Locale } from "@/i18n/config";
+import type { Dictionary } from "@/i18n/types";
 import {
   aiModelLabels,
   aiModelValues,
   languageLabels,
   languageValues,
-  themeLabels,
   themeValues,
 } from "@/lib/constants";
+import { isAppTheme } from "@/lib/theme";
 import type { ActionResult } from "@/server/action-result";
 
 const initialState: ActionResult = {
@@ -33,9 +35,11 @@ const initialState: ActionResult = {
 
 type SettingsFormProps = {
   preference: PreferenceView;
+  locale: Locale;
+  messages: Dictionary["settings"]["form"];
 };
 
-export function SettingsForm({ preference }: SettingsFormProps) {
+export function SettingsForm({ preference, locale, messages }: SettingsFormProps) {
   const { setTheme } = useTheme();
   const [notifications, setNotifications] = useState(preference.notifications);
   const [state, formAction, isPending] = useActionState(
@@ -45,12 +49,18 @@ export function SettingsForm({ preference }: SettingsFormProps) {
 
   return (
     <form action={formAction} className="grid gap-5">
+      <input type="hidden" name="locale" value={locale} />
       <div className="grid gap-2">
-        <Label>主题</Label>
+        <Label>{messages.theme}</Label>
         <Select
           name="theme"
           defaultValue={preference.theme}
-          onValueChange={(value) => setTheme(value)}
+          onValueChange={(value) => {
+            // Select 返回 string，切换主题前再收窄一次，避免无效值写入 localStorage 或 html class。
+            if (isAppTheme(value)) {
+              setTheme(value);
+            }
+          }}
         >
           <SelectTrigger>
             <SelectValue />
@@ -58,7 +68,7 @@ export function SettingsForm({ preference }: SettingsFormProps) {
           <SelectContent>
             {themeValues.map((theme) => (
               <SelectItem key={theme} value={theme}>
-                {themeLabels[theme]}
+                {messages.themes[theme]}
               </SelectItem>
             ))}
           </SelectContent>
@@ -66,7 +76,7 @@ export function SettingsForm({ preference }: SettingsFormProps) {
       </div>
 
       <div className="grid gap-2">
-        <Label>默认 AI 模型</Label>
+        <Label>{messages.defaultModel}</Label>
         <Select name="defaultModel" defaultValue={preference.defaultModel}>
           <SelectTrigger>
             <SelectValue />
@@ -82,7 +92,7 @@ export function SettingsForm({ preference }: SettingsFormProps) {
       </div>
 
       <div className="grid gap-2">
-        <Label>默认语言</Label>
+        <Label>{messages.language}</Label>
         <Select name="language" defaultValue={preference.language}>
           <SelectTrigger>
             <SelectValue />
@@ -103,7 +113,7 @@ export function SettingsForm({ preference }: SettingsFormProps) {
           checked={notifications}
           onCheckedChange={(checked) => setNotifications(checked === true)}
         />
-        <span>接收产品通知</span>
+        <span>{messages.notifications}</span>
       </label>
 
       {state.message ? (
@@ -114,7 +124,7 @@ export function SettingsForm({ preference }: SettingsFormProps) {
 
       <Button type="submit" disabled={isPending} className="w-fit">
         <Save data-icon="inline-start" />
-        {isPending ? "保存中" : "保存设置"}
+        {isPending ? messages.submitting : messages.submit}
       </Button>
     </form>
   );

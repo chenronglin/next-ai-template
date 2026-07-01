@@ -14,7 +14,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { aiPromptSchema } from "@/features/ai/schema";
+import { createAiPromptSchema } from "@/features/ai/schema";
+import type { Locale } from "@/i18n/config";
+import type { Dictionary } from "@/i18n/types";
 import { formatDateTime } from "@/lib/format";
 
 type ModelOption = {
@@ -38,9 +40,17 @@ type AiChatPanelProps = {
   models: ModelOption[];
   defaultModel: string;
   history: AiHistoryItem[];
+  locale: Locale;
+  messages: Dictionary["ai"];
 };
 
-export function AiChatPanel({ models, defaultModel, history }: AiChatPanelProps) {
+export function AiChatPanel({
+  models,
+  defaultModel,
+  history,
+  locale,
+  messages,
+}: AiChatPanelProps) {
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState(defaultModel);
   const [output, setOutput] = useState("");
@@ -52,9 +62,9 @@ export function AiChatPanel({ models, defaultModel, history }: AiChatPanelProps)
     setError("");
     setOutput("");
 
-    const parsed = aiPromptSchema.safeParse({ prompt, model });
+    const parsed = createAiPromptSchema(messages.validation).safeParse({ prompt, model });
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? "Prompt 无效");
+      setError(parsed.error.issues[0]?.message ?? messages.form.invalidPrompt);
       return;
     }
 
@@ -64,11 +74,14 @@ export function AiChatPanel({ models, defaultModel, history }: AiChatPanelProps)
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(parsed.data),
+        body: JSON.stringify({
+          ...parsed.data,
+          locale,
+        }),
       });
 
       if (!response.ok || !response.body) {
-        setError("AI 请求失败，请稍后重试");
+        setError(messages.form.requestFailure);
         return;
       }
 
@@ -92,7 +105,7 @@ export function AiChatPanel({ models, defaultModel, history }: AiChatPanelProps)
       <div className="rounded-lg border bg-background p-4">
         <form onSubmit={handleSubmit} className="grid gap-4">
           <div className="grid gap-2">
-            <Label>模型</Label>
+            <Label>{messages.form.model}</Label>
             <Select value={model} onValueChange={setModel}>
               <SelectTrigger>
                 <SelectValue />
@@ -107,12 +120,12 @@ export function AiChatPanel({ models, defaultModel, history }: AiChatPanelProps)
             </Select>
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="prompt">Prompt</Label>
+            <Label htmlFor="prompt">{messages.form.prompt}</Label>
             <Textarea
               id="prompt"
               value={prompt}
               onChange={(event) => setPrompt(event.target.value)}
-              placeholder="让 AI 生成一段产品文案、SQL 查询或功能拆解..."
+              placeholder={messages.form.promptPlaceholder}
               className="min-h-36"
             />
           </div>
@@ -124,15 +137,15 @@ export function AiChatPanel({ models, defaultModel, history }: AiChatPanelProps)
           <div className="flex flex-wrap gap-2">
             <Button type="submit" disabled={isPending}>
               <Send data-icon="inline-start" />
-              {isPending ? "生成中" : "生成"}
+              {isPending ? messages.form.submitting : messages.form.submit}
             </Button>
             <Button type="button" variant="outline" onClick={() => setOutput("")}>
               <Trash2 data-icon="inline-start" />
-              清空会话
+              {messages.form.clear}
             </Button>
             <Button type="button" variant="ghost" disabled>
               <Save data-icon="inline-start" />
-              自动保存
+              {messages.form.autoSave}
             </Button>
           </div>
         </form>
@@ -140,26 +153,26 @@ export function AiChatPanel({ models, defaultModel, history }: AiChatPanelProps)
         <div className="mt-6 min-h-60 rounded-lg border bg-muted/30 p-4">
           <div className="mb-3 flex items-center gap-2 text-sm font-medium">
             <Bot className="size-4 text-primary" />
-            Streaming 输出
+            {messages.form.outputTitle}
           </div>
           <pre className="whitespace-pre-wrap text-sm leading-6 text-foreground">
-            {output || "等待输入 Prompt 后开始生成。"}
+            {output || messages.form.waiting}
           </pre>
         </div>
       </div>
 
       <aside className="rounded-lg border bg-background p-4">
-        <h2 className="text-base font-semibold">生成历史</h2>
+        <h2 className="text-base font-semibold">{messages.history.title}</h2>
         <div className="mt-4 grid gap-3">
           {history.length === 0 ? (
-            <p className="text-sm text-muted-foreground">暂无历史记录。</p>
+            <p className="text-sm text-muted-foreground">{messages.history.empty}</p>
           ) : (
             history.map((item) => (
               <div key={item.id} className="rounded-md border p-3">
                 <p className="line-clamp-2 text-sm font-medium">{item.title}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{item.model}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {formatDateTime(item.updatedAt)}
+                  {formatDateTime(item.updatedAt, locale)}
                 </p>
               </div>
             ))

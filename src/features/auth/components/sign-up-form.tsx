@@ -9,17 +9,29 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { signUpSchema } from "@/features/auth/schema";
+import { createSignUpSchema } from "@/features/auth/schema";
+import { localizeHref, type Locale } from "@/i18n/config";
+import type { Dictionary } from "@/i18n/types";
 import { authClient } from "@/lib/auth-client";
 
-export function SignUpForm() {
+type SignUpFormProps = {
+  locale: Locale;
+  messages: Dictionary["auth"]["signUp"]["form"];
+  validationMessages: Dictionary["auth"]["validation"];
+};
+
+export function SignUpForm({
+  locale,
+  messages,
+  validationMessages,
+}: SignUpFormProps) {
   const router = useRouter();
   const [terms, setTerms] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(formData: FormData) {
     // Better Auth 会做最终认证校验；这里先用 Zod 给用户即时、统一的表单错误。
-    const parsed = signUpSchema.safeParse({
+    const parsed = createSignUpSchema(validationMessages).safeParse({
       name: formData.get("name"),
       email: formData.get("email"),
       password: formData.get("password"),
@@ -28,7 +40,7 @@ export function SignUpForm() {
     });
 
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "注册信息不完整");
+      toast.error(parsed.error.issues[0]?.message ?? messages.incomplete);
       return;
     }
 
@@ -37,16 +49,16 @@ export function SignUpForm() {
         name: parsed.data.name,
         email: parsed.data.email,
         password: parsed.data.password,
-        callbackURL: "/dashboard",
+        callbackURL: localizeHref("/dashboard", locale),
       });
 
       if (result.error) {
-        toast.error(result.error.message ?? "注册失败");
+        toast.error(result.error.message ?? messages.failure);
         return;
       }
 
-      toast.success("注册成功");
-      router.push("/dashboard");
+      toast.success(messages.success);
+      router.push(localizeHref("/dashboard", locale));
       router.refresh();
     });
   }
@@ -54,15 +66,15 @@ export function SignUpForm() {
   return (
     <form action={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="name">显示名称</Label>
+        <Label htmlFor="name">{messages.name}</Label>
         <Input id="name" name="name" autoComplete="name" required />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="email">邮箱</Label>
+        <Label htmlFor="email">{messages.email}</Label>
         <Input id="email" name="email" type="email" autoComplete="email" required />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="password">密码</Label>
+        <Label htmlFor="password">{messages.password}</Label>
         <Input
           id="password"
           name="password"
@@ -72,7 +84,7 @@ export function SignUpForm() {
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="confirmPassword">确认密码</Label>
+        <Label htmlFor="confirmPassword">{messages.confirmPassword}</Label>
         <Input
           id="confirmPassword"
           name="confirmPassword"
@@ -83,15 +95,15 @@ export function SignUpForm() {
       </div>
       <label className="flex items-center gap-2 text-sm">
         <Checkbox checked={terms} onCheckedChange={(checked) => setTerms(checked === true)} />
-        <span>我同意服务条款和隐私政策</span>
+        <span>{messages.terms}</span>
       </label>
       <Button type="submit" className="w-full" disabled={isPending}>
-        {isPending ? "注册中" : "注册"}
+        {isPending ? messages.submitting : messages.submit}
       </Button>
       <p className="text-center text-sm text-muted-foreground">
-        已有账户？{" "}
-        <Link href="/sign-in" className="text-primary hover:underline">
-          登录
+        {messages.hasAccount}{" "}
+        <Link href={localizeHref("/sign-in", locale)} className="text-primary hover:underline">
+          {messages.signIn}
         </Link>
       </p>
     </form>
