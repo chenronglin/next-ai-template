@@ -155,6 +155,7 @@ export const enUSDictionary: Dictionary = {
         success: "Signed in",
         failure: "Sign in failed",
         incomplete: "Sign-in details are incomplete",
+        authFailure: "Email or password is incorrect",
       },
     },
     signUp: {
@@ -173,6 +174,7 @@ export const enUSDictionary: Dictionary = {
         success: "Account created",
         failure: "Sign up failed",
         incomplete: "Sign-up details are incomplete",
+        emailUnavailable: "This email cannot be used. Try another email or sign in.",
       },
     },
     forgotPassword: {

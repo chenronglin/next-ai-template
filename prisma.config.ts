@@ -7,7 +7,8 @@ export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
-    seed: "bun prisma/seed.ts",
+    // seed 会加载 Prisma SQLite adapter 和 better-sqlite3；Bun 运行时目前无法加载该原生模块，所以这里必须显式走 Node。
+    seed: "node --import tsx prisma/seed.ts",
   },
   datasource: {
     url: env("DATABASE_URL"),

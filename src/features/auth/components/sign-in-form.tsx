@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import { FormEvent, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,9 @@ type SignInFormProps = {
   >;
 };
 
+// 登录只有邮箱和密码两个可纠正字段；认证失败也会收敛到其中一个字段下展示。
+type SignInFieldErrors = Partial<Record<"email" | "password", string>>;
+
 export function SignInForm({
   locale,
   messages,
@@ -31,9 +34,31 @@ export function SignInForm({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [rememberMe, setRememberMe] = useState(true);
+  const [fieldErrors, setFieldErrors] = useState<SignInFieldErrors>({});
   const [isPending, startTransition] = useTransition();
 
-  function handleSubmit(formData: FormData) {
+  function clearFieldError(field: keyof SignInFieldErrors) {
+    // 用户修改字段时只清理当前字段的旧错误，保留其他字段错误，避免表单反馈突然全部消失。
+    setFieldErrors((current) => {
+      if (!current[field]) {
+        return current;
+      }
+
+      const nextErrors = { ...current };
+      delete nextErrors[field];
+      return nextErrors;
+    });
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    // 登录失败时保留邮箱和密码输入；不用 form action，避免 React 在 action 返回后重置 uncontrolled 输入框。
+    event.preventDefault();
+
+    // 每次提交前清空旧错误，避免用户修正输入后仍看到上一轮字段提示。
+    setFieldErrors({});
+
+    const formData = new FormData(event.currentTarget);
+
     // 表单提交是明确交互，不需要 effect；先本地 Zod 校验，再调用 Better Auth。
     const parsed = createSignInSchema(validationMessages).safeParse({
       email: formData.get("email"),
@@ -42,7 +67,14 @@ export function SignInForm({
     });
 
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? messages.incomplete);
+      const errors = parsed.error.flatten().fieldErrors;
+      const hasFieldError = Boolean(errors.email?.[0] || errors.password?.[0]);
+
+      // 登录页只展示邮箱和密码两个字段错误；字段缺失时用表单级兜底文案落到邮箱下方。
+      setFieldErrors({
+        email: errors.email?.[0] ?? (!hasFieldError ? messages.incomplete : undefined),
+        password: errors.password?.[0],
+      });
       return;
     }
 
@@ -54,7 +86,8 @@ export function SignInForm({
       });
 
       if (result.error) {
-        toast.error(result.error.message ?? messages.failure);
+        // 登录失败不暴露“邮箱是否存在”，统一提示到密码框下方，符合主流产品的安全反馈方式。
+        setFieldErrors({ password: messages.authFailure });
         return;
       }
 
@@ -65,10 +98,23 @@ export function SignInForm({
   }
 
   return (
-    <form action={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
       <div className="space-y-2">
         <Label htmlFor="email">{messages.email}</Label>
-        <Input id="email" name="email" type="email" autoComplete="email" required />
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          onChange={() => clearFieldError("email")}
+          aria-invalid={Boolean(fieldErrors.email)}
+          aria-describedby={fieldErrors.email ? "sign-in-email-error" : undefined}
+        />
+        {fieldErrors.email ? (
+          <p id="sign-in-email-error" className="text-sm text-destructive">
+            {fieldErrors.email}
+          </p>
+        ) : null}
       </div>
       <div className="space-y-2">
         <Label htmlFor="password">{messages.password}</Label>
@@ -77,8 +123,15 @@ export function SignInForm({
           name="password"
           type="password"
           autoComplete="current-password"
-          required
+          onChange={() => clearFieldError("password")}
+          aria-invalid={Boolean(fieldErrors.password)}
+          aria-describedby={fieldErrors.password ? "sign-in-password-error" : undefined}
         />
+        {fieldErrors.password ? (
+          <p id="sign-in-password-error" className="text-sm text-destructive">
+            {fieldErrors.password}
+          </p>
+        ) : null}
       </div>
       <div className="flex items-center justify-between gap-4 text-sm">
         <label className="flex items-center gap-2">

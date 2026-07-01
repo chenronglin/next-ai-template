@@ -146,6 +146,7 @@ export const zhCNDictionary = {
         success: "登录成功",
         failure: "登录失败",
         incomplete: "登录信息不完整",
+        authFailure: "邮箱或密码不正确",
       },
     },
     signUp: {
@@ -164,6 +165,7 @@ export const zhCNDictionary = {
         success: "注册成功",
         failure: "注册失败",
         incomplete: "注册信息不完整",
+        emailUnavailable: "该邮箱无法注册，请更换邮箱或直接登录",
       },
     },
     forgotPassword: {
