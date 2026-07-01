@@ -44,7 +44,7 @@ src/features/            feature-first business modules
 src/lib/                 env, auth, db and shared constants
 src/server/              server-only helpers
 prisma/                  schema, migrations and seed
-skills/                  project-local Codex skills
+.agents/skills/          project-local Codex skills discovered by Codex
 ```
 
 ## Environment
