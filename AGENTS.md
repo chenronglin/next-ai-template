@@ -12,12 +12,13 @@
 | 技能 | 必须使用的场景 |
 | --- | --- |
 | `next-saas-template` | 新增或修改 Next.js SaaS 页面、layout、业务模块、路由结构、Server/Client Component 边界。 |
+| `next-i18n` | 新增、改造、扩展或修复项目多语言、locale 路由、字典、语言切换、localized metadata、proxy 语言重定向。 |
 | `shadcn-product-ui` | 新增或修改产品 UI、后台页面、表单、表格、弹窗、加载/空/错误状态。 |
 | `zod-server-actions` | 新增或修改表单、Server Action、CRUD、Route Handler 输入校验和写操作返回结构。 |
 | `prisma-better-auth` | 涉及用户、会话、Better Auth、Prisma 模型、数据库访问、迁移或 seed。 |
 | `ai-sdk-next` | 新增或修改 AI 生成、streaming UI、模型选择、prompt 校验、AI 会话历史保存。 |
 
-多场景任务需要读取多个技能。推荐顺序：`next-saas-template` -> `prisma-better-auth` -> `zod-server-actions` -> `shadcn-product-ui` -> `ai-sdk-next`，并按实际任务跳过无关技能。
+多场景任务需要读取多个技能。推荐顺序：`next-saas-template` -> `next-i18n` -> `prisma-better-auth` -> `zod-server-actions` -> `shadcn-product-ui` -> `ai-sdk-next`，并按实际任务跳过无关技能。
 
 ## Next.js 本地文档
 
