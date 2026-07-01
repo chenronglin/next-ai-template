@@ -3,6 +3,7 @@ import { Suspense } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SignInForm } from "@/features/auth/components/sign-in-form";
+import { getOAuthProviderStatuses } from "@/features/auth/oauth";
 import { getLocaleFromRouteParams, type LocaleRouteParams } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 
@@ -26,6 +27,7 @@ export default async function SignInPage({
 }) {
   const locale = await getLocaleFromRouteParams(params);
   const dictionary = await getDictionary(locale);
+  const oauthProviders = getOAuthProviderStatuses();
 
   return (
     <Card className="w-full max-w-md">
@@ -37,6 +39,8 @@ export default async function SignInPage({
           <SignInForm
             locale={locale}
             messages={dictionary.auth.signIn.form}
+            oauthMessages={dictionary.auth.oauth}
+            oauthProviders={oauthProviders}
             validationMessages={dictionary.auth.validation}
           />
         </Suspense>

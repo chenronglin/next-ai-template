@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { ChangePasswordForm } from "@/features/profile/components/change-password-form";
 import { UpdateProfileForm } from "@/features/profile/components/update-profile-form";
 import { getProfileDetails } from "@/features/profile/queries";
 import { getLocaleFromRouteParams, type LocaleRouteParams } from "@/i18n/config";
@@ -117,8 +118,11 @@ export default async function MePage({
               {messages.changePasswordTitle}
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            {messages.changePasswordDescription}
+          <CardContent>
+            <ChangePasswordForm
+              locale={locale}
+              messages={messages.changePassword}
+            />
           </CardContent>
         </Card>
       </div>

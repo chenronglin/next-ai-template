@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { FormEvent, useState, useTransition } from "react";
 import { toast } from "sonner";
 
@@ -9,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { OAuthButtons } from "@/features/auth/components/oauth-buttons";
+import type { OAuthProviderStatus } from "@/features/auth/oauth-types";
 import { createSignUpSchema } from "@/features/auth/schema";
 import { localizeHref, type Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/types";
@@ -17,6 +18,8 @@ import { authClient } from "@/lib/auth-client";
 type SignUpFormProps = {
   locale: Locale;
   messages: Dictionary["auth"]["signUp"]["form"];
+  oauthMessages: Dictionary["auth"]["oauth"];
+  oauthProviders: OAuthProviderStatus[];
   validationMessages: Dictionary["auth"]["validation"];
 };
 
@@ -28,11 +31,13 @@ type SignUpFieldErrors = Partial<
 export function SignUpForm({
   locale,
   messages,
+  oauthMessages,
+  oauthProviders,
   validationMessages,
 }: SignUpFormProps) {
-  const router = useRouter();
   const [terms, setTerms] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<SignUpFieldErrors>({});
+  const [statusMessage, setStatusMessage] = useState("");
   const [isPending, startTransition] = useTransition();
 
   function clearFieldError(field: keyof SignUpFieldErrors) {
@@ -54,6 +59,7 @@ export function SignUpForm({
 
     // 每次提交前清空旧错误，保证输入框下方只展示当前这轮校验结果。
     setFieldErrors({});
+    setStatusMessage("");
 
     const formData = new FormData(event.currentTarget);
 
@@ -102,8 +108,8 @@ export function SignUpForm({
       }
 
       toast.success(messages.success);
-      router.push(localizeHref("/dashboard", locale));
-      router.refresh();
+      // 邮箱验证开启后，注册成功不直接进入后台；用户需要先从邮件链接完成验证和自动登录。
+      setStatusMessage(messages.verificationSent);
     });
   }
 
@@ -200,6 +206,13 @@ export function SignUpForm({
       <Button type="submit" className="w-full" disabled={isPending}>
         {isPending ? messages.submitting : messages.submit}
       </Button>
+      {statusMessage ? <p className="text-sm text-primary">{statusMessage}</p> : null}
+      <OAuthButtons
+        locale={locale}
+        mode="sign-up"
+        providers={oauthProviders}
+        messages={oauthMessages}
+      />
       <p className="text-center text-sm text-muted-foreground">
         {messages.hasAccount}{" "}
         <Link href={localizeHref("/sign-in", locale)} className="text-primary hover:underline">

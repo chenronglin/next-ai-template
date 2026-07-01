@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DeleteAccountForm } from "@/features/settings/components/delete-account-form";
 import { SettingsForm } from "@/features/settings/components/settings-form";
 import { getUserPreference } from "@/features/settings/queries";
 import { getLocaleFromRouteParams, type LocaleRouteParams } from "@/i18n/config";
@@ -56,7 +57,14 @@ export default async function SettingsPage({
 
       <Alert variant="destructive">
         <AlertTitle>{messages.dangerTitle}</AlertTitle>
-        <AlertDescription>{messages.dangerDescription}</AlertDescription>
+        <AlertDescription className="grid gap-3">
+          <p>{messages.dangerDescription}</p>
+          <DeleteAccountForm
+            locale={locale}
+            email={session.user.email}
+            messages={messages.danger}
+          />
+        </AlertDescription>
       </Alert>
     </div>
   );

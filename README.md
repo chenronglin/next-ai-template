@@ -57,8 +57,16 @@ BETTER_AUTH_SECRET="..."
 BETTER_AUTH_URL="http://localhost:3000"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 AI_GATEWAY_API_KEY=""
+RESEND_API_KEY=""
+RESEND_FROM_EMAIL="onboarding@resend.dev"
+GITHUB_CLIENT_ID=""
+GITHUB_CLIENT_SECRET=""
+GOOGLE_CLIENT_ID=""
+GOOGLE_CLIENT_SECRET=""
 ```
 
 When `AI_GATEWAY_API_KEY` is empty, `/ai` uses a local streaming demo response. Configure Vercel AI Gateway to enable real model output.
+
+When `RESEND_API_KEY` is empty in local development, auth emails are not sent externally and the app logs a development hint instead. Set Resend and OAuth provider credentials to enable real email verification, password reset, account deletion confirmation, and social sign-in.
 
 The default SQLite file is `dev.db` in the project root because Prisma 7 resolves `prisma.config.ts` datasource URLs from the project root.

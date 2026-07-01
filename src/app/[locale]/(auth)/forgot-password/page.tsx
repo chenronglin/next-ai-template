@@ -33,6 +33,7 @@ export default async function ForgotPasswordPage({
       </CardHeader>
       <CardContent>
         <ForgotPasswordForm
+          locale={locale}
           messages={dictionary.auth.forgotPassword.form}
           validationMessages={dictionary.auth.validation}
         />

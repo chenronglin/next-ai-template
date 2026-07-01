@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SignUpForm } from "@/features/auth/components/sign-up-form";
+import { getOAuthProviderStatuses } from "@/features/auth/oauth";
 import { getLocaleFromRouteParams, type LocaleRouteParams } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 
@@ -25,6 +26,7 @@ export default async function SignUpPage({
 }) {
   const locale = await getLocaleFromRouteParams(params);
   const dictionary = await getDictionary(locale);
+  const oauthProviders = getOAuthProviderStatuses();
 
   return (
     <Card className="w-full max-w-md">
@@ -35,6 +37,8 @@ export default async function SignUpPage({
         <SignUpForm
           locale={locale}
           messages={dictionary.auth.signUp.form}
+          oauthMessages={dictionary.auth.oauth}
+          oauthProviders={oauthProviders}
           validationMessages={dictionary.auth.validation}
         />
       </CardContent>

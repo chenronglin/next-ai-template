@@ -10,4 +10,23 @@ export const settingsSchema = z.object({
   notifications: z.boolean(),
 });
 
+type DeleteAccountValidationMessages = {
+  passwordRequired: string;
+  confirmationMismatch: string;
+};
+
+export function createDeleteAccountSchema(
+  messages: DeleteAccountValidationMessages,
+  expectedEmail: string,
+) {
+  // 删除账户必须同时通过密码校验和邮箱文本确认，降低误触发危险操作的概率。
+  return z.object({
+    password: z.string().min(1, messages.passwordRequired),
+    confirmation: z
+      .string()
+      .trim()
+      .refine((value) => value === expectedEmail, messages.confirmationMismatch),
+  });
+}
+
 export type SettingsInput = z.infer<typeof settingsSchema>;

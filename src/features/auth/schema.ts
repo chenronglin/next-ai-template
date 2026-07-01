@@ -44,6 +44,25 @@ export function createForgotPasswordSchema(
   });
 }
 
+export function createResetPasswordSchema(
+  messages: Pick<
+    AuthValidationMessages,
+    "passwordMin" | "confirmPasswordMin" | "passwordMismatch"
+  >,
+) {
+  // 重置密码必须同时校验 token 和两次输入；token 缺失时不调用 Better Auth，避免无效请求进入认证层。
+  return z
+    .object({
+      token: z.string().min(1),
+      password: z.string().min(8, messages.passwordMin).max(128),
+      confirmPassword: z.string().min(8, messages.confirmPasswordMin),
+    })
+    .refine((value) => value.password === value.confirmPassword, {
+      path: ["confirmPassword"],
+      message: messages.passwordMismatch,
+    });
+}
+
 export const signInSchema = createSignInSchema({
   invalidEmail: "请输入有效邮箱",
   passwordMin: "密码至少 8 位",
@@ -62,5 +81,12 @@ export const forgotPasswordSchema = createForgotPasswordSchema({
   invalidEmail: "请输入有效邮箱",
 });
 
+export const resetPasswordSchema = createResetPasswordSchema({
+  passwordMin: "密码至少 8 位",
+  confirmPasswordMin: "请再次输入密码",
+  passwordMismatch: "两次输入的密码不一致",
+});
+
 export type SignInInput = z.infer<typeof signInSchema>;
 export type SignUpInput = z.infer<typeof signUpSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;

@@ -148,14 +148,18 @@ export const enUSDictionary: Dictionary = {
         forgotPassword: "Forgot password",
         submit: "Sign in",
         submitting: "Signing in",
-        oauthPlaceholder:
-          "OAuth sign-in is reserved here. Add GitHub or Google when the project needs it.",
         noAccount: "No account yet?",
         signUp: "Sign up",
         success: "Signed in",
         failure: "Sign in failed",
         incomplete: "Sign-in details are incomplete",
         authFailure: "Email or password is incorrect",
+        emailNotVerified: "Verify your email before signing in",
+        resendVerification: "Resend verification email",
+        resendVerificationSubmitting: "Sending",
+        resendVerificationSuccess: "A new verification email has been sent",
+        resendVerificationFailure: "Verification email could not be sent. Try again later.",
+        accountDeleted: "Account deleted",
       },
     },
     signUp: {
@@ -171,10 +175,11 @@ export const enUSDictionary: Dictionary = {
         submitting: "Signing up",
         hasAccount: "Already have an account?",
         signIn: "Sign in",
-        success: "Account created",
+        success: "Account created. Check your email to verify it.",
         failure: "Sign up failed",
         incomplete: "Sign-up details are incomplete",
         emailUnavailable: "This email cannot be used. Try another email or sign in.",
+        verificationSent: "Verification email sent. Open the link in your email to finish sign-up.",
       },
     },
     forgotPassword: {
@@ -185,8 +190,50 @@ export const enUSDictionary: Dictionary = {
         submit: "Send reset email",
         submitting: "Working",
         missingEmail: "Enter your email",
-        reserved:
-          "Password reset email support is reserved. Enable it after wiring an email provider.",
+        success: "If this email exists, we sent a password reset email.",
+        failure: "Password reset email could not be sent. Try again later.",
+      },
+    },
+    resetPassword: {
+      metadataTitle: "Reset password",
+      title: "Set a new password",
+      form: {
+        password: "New password",
+        confirmPassword: "Confirm new password",
+        submit: "Update password",
+        submitting: "Updating",
+        success: "Password updated. Sign in again.",
+        invalidToken: "This reset link is invalid or expired. Request a new one.",
+        backToSignIn: "Back to sign in",
+      },
+    },
+    oauth: {
+      divider: "or",
+      signInWith: "Sign in with {provider}",
+      signUpWith: "Sign up with {provider}",
+      unavailable: "Unavailable",
+      unavailableWith: "{provider} not configured",
+      failure: "OAuth sign-in failed. Try again later.",
+    },
+    emails: {
+      footer: "If you did not request this, you can ignore this email.",
+      verification: {
+        subject: "Verify your email",
+        title: "Verify your email",
+        body: "{name}, click the button below to verify your email.",
+        button: "Verify email",
+      },
+      passwordReset: {
+        subject: "Reset your password",
+        title: "Reset your password",
+        body: "{name}, click the button below to set a new password. This link expires in one hour.",
+        button: "Reset password",
+      },
+      deleteAccount: {
+        subject: "Confirm account deletion",
+        title: "Confirm account deletion",
+        body: "{name}, click the button below to confirm account deletion. This cannot be undone.",
+        button: "Confirm deletion",
       },
     },
     validation: {
@@ -254,7 +301,15 @@ export const enUSDictionary: Dictionary = {
     expiresAt: "Expires at {date}",
     changePasswordTitle: "Change password",
     changePasswordDescription:
-      "Reserved for the MVP. Enable Better Auth change password after adding email verification or a second confirmation step.",
+      "Use your current password to update the login password and optionally sign out other devices.",
+    changePassword: {
+      currentPassword: "Current password",
+      newPassword: "New password",
+      confirmPassword: "Confirm new password",
+      revokeOtherSessions: "Sign out other devices after changing password",
+      submit: "Update password",
+      submitting: "Updating",
+    },
     form: {
       name: "Display name",
       image: "Avatar URL",
@@ -264,10 +319,14 @@ export const enUSDictionary: Dictionary = {
     validation: {
       nameMin: "Display name must be at least 2 characters",
       invalidImage: "Enter a valid avatar URL",
+      currentPasswordRequired: "Enter your current password",
+      invalidCurrentPassword: "Current password is incorrect",
     },
     actions: {
       failure: "Profile update failed",
       success: "Profile updated",
+      changePasswordFailure: "Password update failed",
+      changePasswordSuccess: "Password updated",
     },
   },
   settings: {
@@ -277,7 +336,7 @@ export const enUSDictionary: Dictionary = {
     cardTitle: "Preferences",
     dangerTitle: "Danger zone",
     dangerDescription:
-      "Account deletion is only a UI placeholder in the MVP. Production use needs confirmation, export, and audit policies.",
+      "Deleting your account removes sessions, OAuth accounts, preferences, notes, and AI conversations. You must also confirm through email.",
     form: {
       theme: "Theme",
       defaultModel: "Default AI model",
@@ -294,6 +353,25 @@ export const enUSDictionary: Dictionary = {
     actions: {
       failure: "Settings save failed",
       success: "Settings saved",
+    },
+    danger: {
+      trigger: "Delete account",
+      dialogTitle: "Confirm account deletion",
+      dialogDescription:
+        "Enter your current password and type {email} in the confirmation field. We will send a final confirmation email.",
+      password: "Current password",
+      confirmationLabel: "Type your email to confirm",
+      submit: "Send deletion email",
+      submitting: "Sending",
+      validation: {
+        passwordRequired: "Enter your current password",
+        invalidPassword: "Current password is incorrect",
+        confirmationMismatch: "Type the current account email to confirm deletion",
+      },
+      actions: {
+        failure: "Deletion confirmation could not be sent",
+        success: "Deletion confirmation email sent. Check your inbox.",
+      },
     },
   },
   notes: {

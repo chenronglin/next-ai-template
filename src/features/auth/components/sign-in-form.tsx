@@ -7,6 +7,8 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { OAuthButtons } from "@/features/auth/components/oauth-buttons";
+import type { OAuthProviderStatus } from "@/features/auth/oauth-types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createSignInSchema } from "@/features/auth/schema";
@@ -17,6 +19,8 @@ import { authClient } from "@/lib/auth-client";
 type SignInFormProps = {
   locale: Locale;
   messages: Dictionary["auth"]["signIn"]["form"];
+  oauthMessages: Dictionary["auth"]["oauth"];
+  oauthProviders: OAuthProviderStatus[];
   validationMessages: Pick<
     Dictionary["auth"]["validation"],
     "invalidEmail" | "passwordMin"
@@ -29,13 +33,20 @@ type SignInFieldErrors = Partial<Record<"email" | "password", string>>;
 export function SignInForm({
   locale,
   messages,
+  oauthMessages,
+  oauthProviders,
   validationMessages,
 }: SignInFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [rememberMe, setRememberMe] = useState(true);
   const [fieldErrors, setFieldErrors] = useState<SignInFieldErrors>({});
+  const [statusMessage, setStatusMessage] = useState(
+    searchParams.get("deleted") ? messages.accountDeleted : "",
+  );
+  const [verificationEmail, setVerificationEmail] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [isResending, startResendTransition] = useTransition();
 
   function clearFieldError(field: keyof SignInFieldErrors) {
     // 用户修改字段时只清理当前字段的旧错误，保留其他字段错误，避免表单反馈突然全部消失。
@@ -56,6 +67,8 @@ export function SignInForm({
 
     // 每次提交前清空旧错误，避免用户修正输入后仍看到上一轮字段提示。
     setFieldErrors({});
+    setStatusMessage("");
+    setVerificationEmail(null);
 
     const formData = new FormData(event.currentTarget);
 
@@ -79,21 +92,51 @@ export function SignInForm({
     }
 
     startTransition(async () => {
+      const callbackURL = getSafeCallbackUrl(searchParams.get("callbackUrl"), locale);
       const result = await authClient.signIn.email({
         email: parsed.data.email,
         password: parsed.data.password,
         rememberMe: parsed.data.rememberMe,
+        callbackURL,
       });
 
       if (result.error) {
+        if (result.error.code === "EMAIL_NOT_VERIFIED") {
+          // Better Auth 在未验证邮箱时会自动触发一封验证邮件；这里给用户一个字段级、可操作的提示。
+          setVerificationEmail(parsed.data.email);
+          setFieldErrors({ email: messages.emailNotVerified });
+          return;
+        }
+
         // 登录失败不暴露“邮箱是否存在”，统一提示到密码框下方，符合主流产品的安全反馈方式。
         setFieldErrors({ password: messages.authFailure });
         return;
       }
 
       toast.success(messages.success);
-      router.push(getSafeCallbackUrl(searchParams.get("callbackUrl"), locale));
+      router.push(callbackURL);
       router.refresh();
+    });
+  }
+
+  function handleResendVerification() {
+    if (!verificationEmail) {
+      return;
+    }
+
+    startResendTransition(async () => {
+      // 重发接口对不存在或已验证邮箱也返回统一结果，避免前端泄漏账户枚举信息。
+      const result = await authClient.sendVerificationEmail({
+        email: verificationEmail,
+        callbackURL: localizeHref("/dashboard", locale),
+      });
+
+      if (result.error) {
+        setFieldErrors({ email: messages.resendVerificationFailure });
+        return;
+      }
+
+      setStatusMessage(messages.resendVerificationSuccess);
     });
   }
 
@@ -114,6 +157,19 @@ export function SignInForm({
           <p id="sign-in-email-error" className="text-sm text-destructive">
             {fieldErrors.email}
           </p>
+        ) : null}
+        {verificationEmail ? (
+          <Button
+            type="button"
+            variant="link"
+            className="h-auto w-fit px-0"
+            disabled={isResending}
+            onClick={handleResendVerification}
+          >
+            {isResending
+              ? messages.resendVerificationSubmitting
+              : messages.resendVerification}
+          </Button>
         ) : null}
       </div>
       <div className="space-y-2">
@@ -151,9 +207,13 @@ export function SignInForm({
       <Button type="submit" className="w-full" disabled={isPending}>
         {isPending ? messages.submitting : messages.submit}
       </Button>
-      <div className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
-        {messages.oauthPlaceholder}
-      </div>
+      {statusMessage ? <p className="text-sm text-primary">{statusMessage}</p> : null}
+      <OAuthButtons
+        locale={locale}
+        mode="sign-in"
+        providers={oauthProviders}
+        messages={oauthMessages}
+      />
       <p className="text-center text-sm text-muted-foreground">
         {messages.noAccount}{" "}
         <Link href={localizeHref("/sign-up", locale)} className="text-primary hover:underline">

@@ -140,13 +140,18 @@ export const zhCNDictionary = {
         forgotPassword: "忘记密码",
         submit: "登录",
         submitting: "登录中",
-        oauthPlaceholder: "OAuth 登录区域已预留，可按项目需要接入 GitHub 或 Google。",
         noAccount: "还没有账户？",
         signUp: "注册",
         success: "登录成功",
         failure: "登录失败",
         incomplete: "登录信息不完整",
         authFailure: "邮箱或密码不正确",
+        emailNotVerified: "邮箱尚未验证，请先点击验证邮件中的链接",
+        resendVerification: "重新发送验证邮件",
+        resendVerificationSubmitting: "发送中",
+        resendVerificationSuccess: "新的验证邮件已发送，请查收邮箱",
+        resendVerificationFailure: "验证邮件发送失败，请稍后重试",
+        accountDeleted: "账户已删除",
       },
     },
     signUp: {
@@ -162,10 +167,11 @@ export const zhCNDictionary = {
         submitting: "注册中",
         hasAccount: "已有账户？",
         signIn: "登录",
-        success: "注册成功",
+        success: "注册成功，请查收验证邮件",
         failure: "注册失败",
         incomplete: "注册信息不完整",
         emailUnavailable: "该邮箱无法注册，请更换邮箱或直接登录",
+        verificationSent: "验证邮件已发送，请点击邮件中的链接完成注册。",
       },
     },
     forgotPassword: {
@@ -176,7 +182,50 @@ export const zhCNDictionary = {
         submit: "发送重置邮件",
         submitting: "处理中",
         missingEmail: "请输入邮箱",
-        reserved: "重置密码邮件功能已预留，请接入邮件服务后启用。",
+        success: "如果该邮箱存在，我们已发送重置密码邮件",
+        failure: "重置邮件发送失败，请稍后重试",
+      },
+    },
+    resetPassword: {
+      metadataTitle: "重置密码",
+      title: "设置新密码",
+      form: {
+        password: "新密码",
+        confirmPassword: "确认新密码",
+        submit: "更新密码",
+        submitting: "更新中",
+        success: "密码已更新，请重新登录",
+        invalidToken: "重置链接无效或已过期，请重新申请",
+        backToSignIn: "返回登录",
+      },
+    },
+    oauth: {
+      divider: "或",
+      signInWith: "使用 {provider} 登录",
+      signUpWith: "使用 {provider} 注册",
+      unavailable: "暂不可用",
+      unavailableWith: "{provider} 未配置",
+      failure: "OAuth 登录失败，请稍后重试",
+    },
+    emails: {
+      footer: "如果这不是你的操作，可以忽略这封邮件。",
+      verification: {
+        subject: "验证你的邮箱",
+        title: "验证你的邮箱",
+        body: "{name}，请点击下方按钮完成邮箱验证。",
+        button: "验证邮箱",
+      },
+      passwordReset: {
+        subject: "重置你的密码",
+        title: "重置你的密码",
+        body: "{name}，请点击下方按钮设置新密码。链接将在一小时后失效。",
+        button: "重置密码",
+      },
+      deleteAccount: {
+        subject: "确认删除账户",
+        title: "确认删除账户",
+        body: "{name}，请点击下方按钮确认删除账户。该操作完成后不可恢复。",
+        button: "确认删除",
       },
     },
     validation: {
@@ -243,7 +292,15 @@ export const zhCNDictionary = {
     expiresAt: "过期于 {date}",
     changePasswordTitle: "修改密码",
     changePasswordDescription:
-      "MVP 保留入口；接入邮件验证或二次确认后可启用 Better Auth change password。",
+      "使用当前密码更新登录密码，可选择同时退出其他设备。",
+    changePassword: {
+      currentPassword: "当前密码",
+      newPassword: "新密码",
+      confirmPassword: "确认新密码",
+      revokeOtherSessions: "修改后退出其他设备上的登录会话",
+      submit: "更新密码",
+      submitting: "更新中",
+    },
     form: {
       name: "显示名称",
       image: "头像 URL",
@@ -253,10 +310,14 @@ export const zhCNDictionary = {
     validation: {
       nameMin: "显示名称至少 2 个字符",
       invalidImage: "请输入有效头像 URL",
+      currentPasswordRequired: "请输入当前密码",
+      invalidCurrentPassword: "当前密码不正确",
     },
     actions: {
       failure: "个人资料更新失败",
       success: "个人资料已更新",
+      changePasswordFailure: "密码更新失败",
+      changePasswordSuccess: "密码已更新",
     },
   },
   settings: {
@@ -266,7 +327,7 @@ export const zhCNDictionary = {
     cardTitle: "偏好设置",
     dangerTitle: "危险区",
     dangerDescription:
-      "删除账户在 MVP 中仅保留 UI 占位，生产启用前需要二次确认、数据导出和审计策略。",
+      "删除账户会移除你的会话、OAuth 账户、偏好设置、Notes 和 AI 会话。提交后还需要点击邮件中的确认链接。",
     form: {
       theme: "主题",
       defaultModel: "默认 AI 模型",
@@ -283,6 +344,25 @@ export const zhCNDictionary = {
     actions: {
       failure: "设置保存失败",
       success: "设置已保存",
+    },
+    danger: {
+      trigger: "删除账户",
+      dialogTitle: "确认删除账户",
+      dialogDescription:
+        "请输入当前密码，并在确认框中输入 {email}。提交后我们会发送最终确认邮件。",
+      password: "当前密码",
+      confirmationLabel: "输入邮箱确认",
+      submit: "发送删除确认邮件",
+      submitting: "发送中",
+      validation: {
+        passwordRequired: "请输入当前密码",
+        invalidPassword: "当前密码不正确",
+        confirmationMismatch: "请输入当前账户邮箱以确认删除",
+      },
+      actions: {
+        failure: "删除确认发送失败",
+        success: "删除确认邮件已发送，请查收邮箱",
+      },
     },
   },
   notes: {
